@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centrum Gier - Blue Lottery Edition</title>
+    <style>
+        :root {
+            --primary-blue: #3498db;
+            --dark-blue: #2980b9;
+            --light-blue: #ebf5fb;
+            --success-green: #2ecc71;
+            --bg-gradient: linear-gradient(135deg, #a2d2ff 0%, #ffffff 100%);
+            --card-bg: rgba(255, 255, 255, 0.98);
+            --shadow: 0 10px 30px rgba(52, 152, 219, 0.15);
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #2c3e50;
+        }
+
+        /* --- Nawigacja --- */
+        .navbar {
+            width: 100%;
+            max-width: 900px;
+            position: relative;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .hamburger {
+            display: none;
+            font-size: 28px;
+            background: white;
+            border: 2px solid var(--primary-blue);
+            color: var(--primary-blue);
+            padding: 8px 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 1001;
+        }
+
+        .menu {
+            list-style: none;
+            display: flex;
+            gap: 12px;
+            padding: 0;
+            margin: 0;
+        }
+
+        .przycisk-zakładki {
+            background: white;
+            color: var(--primary-blue);
+            font-size: 13px;
+            font-weight: 700;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: var(--shadow);
+            text-transform: uppercase;
+        }
+
+        .przycisk-zakładki.active {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .hamburger { display: block; }
+            .menu {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 60px;
+                background: white;
+                padding: 15px;
+                border-radius: 15px;
+                width: 200px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            }
+            .menu.open { display: flex; }
+        }
+
+        /* --- Kontenery --- */
+        .zakładka-content {
+            background: var(--card-bg);
+            width: 95%;
+            max-width: 800px;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            display: none;
+            text-align: center;
+        }
+
+        h2 { color: var(--dark-blue); margin-top: 0; }
+
+        /* --- Lotto Style --- */
+        table { margin: 20px auto; border-spacing: 5px; }
+        #lottoGrid td {
+            background: #fff;
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            border: 1px solid #ddd;
+            transition: 0.2s;
+        }
+        #lottoGrid td.selected {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--light-blue);
+            border-radius: 15px;
+            min-height: 80px;
+        }
+
+        .ball {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            margin: 5px;
+            font-weight: bold;
+            border: 2px solid #ddd;
+        }
+
+        .ball.match {
+            background: var(--success-green);
+            color: white;
+            border-color: #27ae60;
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+        }
+
+        /* Memory & TTT Style */
+        #memoryGrid td { background: var(--primary-blue); width: 55px; height: 55px; border-radius: 10px; cursor: pointer; color: transparent; font-weight: bold; }
+        #table4 td { width: 90px; height: 90px; background: #fff; border-radius: 15px; font-size: 2.5em; color: var(--primary-blue); border: 2px solid #eee; cursor: pointer; }
+        
+        .action-btn { background: var(--primary-blue); color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; margin: 10px; transition: 0.3s; }
+        .action-btn:hover { background: var(--dark-blue); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <button class="hamburger" onclick="toggleMenu()">&#9776;</button>
+        <ul class="menu" id="navMenu">
+            <li><button class="przycisk-zakładki" data-zakładka="zakładka3">Kółko i Krzyżyk</button></li>
+            <li><button class="przycisk-zakładki" data-zakładka="zakładka2">Gra Pamięć 5x5</button></li>
+            <li><button class="przycisk-zakładki" data-zakładka="zakładka1">Losowe liczby</button></li>
+        </ul>
+    </nav>
+
+    <div id="zakładka1" class="zakładka-content">
+        <h2>🔢 Wybierz 6 z 50</h2>
+        <div id="lottoContainer"></div>
+        
+        <div class="result-area">
+            <div>Twoje typy: <span id="chosenDisplay" style="font-weight:bold;">brak</span></div>
+            <div id="drawDisplay" style="margin-top:10px;"></div>
+            <div id="scoreSummary" style="margin-top:10px; font-weight:bold; color: var(--dark-blue);"></div>
+        </div>
+
+        <button class="action-btn" onclick="checkLotto()">SPRAWDŹ LICZBY</button>
+        <button class="action-btn" onclick="resetLotto()" style="background:#95a5a6;">Wyczyść</button>
+    </div>
+
+    <div id="zakładka2" class="zakładka-content">
+        <h2>🧠 Pamięć 5x5</h2>
+        <div id="memoryGrid"></div>
+        <button class="action-btn" onclick="initMemory()">Restart</button>
+    </div>
+
+    <div id="zakładka3" class="zakładka-content">
+        <h2>❌ Kółko i Krzyżyk</h2>
+        <p>Tura: <strong id="gracz">X</strong></p>
+        <div id="winner"></div>
+        <table id="table4">
+            <tr><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td></tr>
+            <tr><td></td><td></td><td></td></tr>
+        </table>
+        <button class="action-btn" onclick="resetTTT()">Reset</button>
+    </div>
+
+    <script>
+        /* --- Menu & Tabs --- */
+        function toggleMenu() { document.getElementById('navMenu').classList.toggle('open'); }
+        function switchTab(id) {
+            document.querySelectorAll('.zakładka-content').forEach(z => z.style.display = 'none');
+            document.querySelectorAll('.przycisk-zakładki').forEach(b => b.classList.remove('active'));
+            document.getElementById(id).style.display = 'block';
+            document.querySelector(`[data-zakładka="${id}"]`).classList.add('active');
+            document.getElementById('navMenu').classList.remove('open');
+        }
+        document.querySelectorAll('.przycisk-zakładki').forEach(btn => {
+            btn.addEventListener('click', () => switchTab(btn.dataset.zakładka));
+        });
+
+        /* --- GRA 1: LOTTO --- */
+        let userNumbers = [];
+        function initLotto() {
+            const cont = document.getElementById('lottoContainer');
+            const tbl = document.createElement('table');
+            tbl.id = "lottoGrid";
+            let n = 1;
+            for(let i=0; i<5; i++){
+                let r = tbl.insertRow();
+                for(let j=0; j<10; j++){
+                    let c = r.insertCell();
+                    c.textContent = n;
+                    c.dataset.num = n;
+                    c.onclick = function(){
+                        let val = parseInt(this.dataset.num);
+                        if(userNumbers.includes(val)){
+                            userNumbers = userNumbers.filter(x => x !== val);
+                            this.classList.remove('selected');
+                        } else if(userNumbers.length < 6){
+                            userNumbers.push(val);
+                            this.classList.add('selected');
+                        }
+                        document.getElementById('chosenDisplay').textContent = userNumbers.sort((a,b)=>a-b).join(", ");
+                    };
+                    n++;
+                }
+            }
+            cont.appendChild(tbl);
+        }
+
+        function checkLotto() {
+            if(userNumbers.length < 6) {
+                alert("Wybierz dokładnie 6 liczb!");
+                return;
+            }
+
+            // Losowanie 6 liczb systemowych
+            let drawn = [];
+            while(drawn.length < 6){
+                let r = Math.floor(Math.random() * 50) + 1;
+                if(!drawn.includes(r)) drawn.push(r);
+            }
+            drawn.sort((a,b)=>a-b);
+
+            // Wyświetlanie i sprawdzanie trafień
+            const drawDisplay = document.getElementById('drawDisplay');
+            drawDisplay.innerHTML = "Wylosowane: ";
+            let hits = 0;
+
+            drawn.forEach(num => {
+                const ball = document.createElement('span');
+                ball.className = 'ball';
+                ball.textContent = num;
+                if(userNumbers.includes(num)) {
+                    ball.classList.add('match');
+                    hits++;
+                }
+                drawDisplay.appendChild(ball);
+            });
+
+            document.getElementById('scoreSummary').textContent = `Trafiłeś: ${hits} / 6`;
+        }
+
+        function resetLotto() {
+            userNumbers = [];
+            document.querySelectorAll('#lottoGrid td').forEach(td => td.classList.remove('selected'));
+            document.getElementById('chosenDisplay').textContent = "brak";
+            document.getElementById('drawDisplay').innerHTML = "";
+            document.getElementById('scoreSummary').textContent = "";
+        }
+
+        /* --- GRA 2: MEMORY 5x5 --- */
+        let first = null, lock = false;
+        function initMemory() {
+            const grid = document.getElementById('memoryGrid');
+            grid.innerHTML = "";
+            const tbl = document.createElement('table');
+            let vals = [];
+            for(let i=1; i<=12; i++) vals.push(i, i);
+            vals.push("⭐");
+            vals.sort(() => Math.random() - 0.5);
+            vals.forEach((v, i) => {
+                if(i%5 === 0) row = tbl.insertRow();
+                let c = row.insertCell();
+                c.textContent = v;
+                c.onclick = function() {
+                    if(lock || this === first || this.style.background === 'white') return;
+                    this.style.background = 'white'; this.style.color = 'var(--primary-blue)';
+                    if(this.textContent === "⭐") return;
+                    if(!first) { first = this; } 
+                    else {
+                        lock = true;
+                        if(first.textContent === this.textContent) { first = null; lock = false; }
+                        else { setTimeout(() => {
+                            this.style.background = 'var(--primary-blue)'; this.style.color = 'transparent';
+                            first.style.background = 'var(--primary-blue)'; first.style.color = 'transparent';
+                            first = null; lock = false;
+                        }, 500); }
+                    }
+                };
+            });
+            grid.appendChild(tbl);
+        }
+
+        /* --- GRA 3: TTT --- */
+        const cells = document.querySelectorAll('#table4 td');
+        let player = "X";
+        cells.forEach(c => c.onclick = () => {
+            if(!c.textContent && !document.getElementById('winner').textContent) {
+                c.textContent = player;
+                if(checkTTT()) document.getElementById('winner').innerHTML = `<h3>Wygrał ${player}!</h3>`;
+                else { player = player === "X" ? "O" : "X"; document.getElementById('gracz').textContent = player; }
+            }
+        });
+        function checkTTT() {
+            const w = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+            return w.some(l => cells[l[0]].textContent && cells[l[0]].textContent === cells[l[1]].textContent && cells[l[0]].textContent === cells[l[2]].textContent);
+        }
+        function resetTTT() { cells.forEach(c => c.textContent = ""); document.getElementById('winner').innerHTML = ""; player = "X"; document.getElementById('gracz').textContent = "X"; }
+
+        // Start
+        initLotto();
+        initMemory();
+        switchTab('zakładka3');
+    </script>
+</body>
+</html>
